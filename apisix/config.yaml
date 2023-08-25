@@ -1,0 +1,26 @@
+deployment:
+  role: data_plane
+  role_data_plane:
+    config_provider: yaml
+plugins:
+  - elasticsearch-logger
+#END
+
+# apisix:
+#   enable_control: true
+#   control:
+#     ip: "0.0.0.0"
+#     port: 9092
+# deployment:
+#   role: traditional
+#   role_traditional:
+#     config_provider: etcd
+#   admin:
+#     admin_key_required: false
+#     allow_admin:
+#       - 0.0.0.0/0
+#   etcd:
+#     host:
+#       - "http://etcd:2379"
+#     prefix: "/apisix"
+#     timeout: 30

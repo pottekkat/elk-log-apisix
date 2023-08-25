@@ -1,0 +1,82 @@
+version: "3"
+services:
+  apisix:
+    image: apache/apisix:3.4.1-debian
+    restart: always
+    volumes:
+      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./apisix/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+    ports:
+      - "9080:9080/tcp"
+      - "9180:9180/tcp"
+    networks:
+      - elk
+    # depends_on:
+    #   - etcd
+  # etcd:
+  #   image: rancher/coreos-etcd:v3.4.15-arm64
+  #   user: root
+  #   restart: always
+  #   volumes:
+  #     - ./etcd_data:/etcd-data
+  #   environment:
+  #     ETCD_UNSUPPORTED_ARCH: "arm64"
+  #     ETCD_ENABLE_V2: "true"
+  #     ALLOW_NONE_AUTHENTICATION: "yes"
+  #     ETCD_ADVERTISE_CLIENT_URLS: "http://0.0.0.0:2379"
+  #     ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+  #     ETCD_DATA_DIR: "/etcd-data"
+  #   ports:
+  #     - "2379:2379/tcp"
+  #   networks:
+  #     - elk
+  upstream200:
+    image: nginx:1.23
+    volumes:
+      - ./upstream200/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - elk
+  upstream500:
+    image: nginx:1.23
+    volumes:
+      - ./upstream500/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - elk
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_STACK_VERSION}
+    restart: always
+    ports:
+      - ${ELASTIC_HOST_PORT}:9200
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      discovery.type: single-node
+      xpack.security.enabled: 'false'
+    volumes:
+      - elasticsearch_vol:/usr/share/elasticsearch/data/
+    networks:
+      - elk
+  # logstash:
+  #   image: docker.elastic.co/logstash/logstash:${ELK_STACK_VERSION}
+  #   volumes:
+  #     - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - elk
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELK_STACK_VERSION}
+    restart: always
+    ports:
+      - ${KIBANA_DASHBOARD_PORT}:5601
+    environment:
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk
+volumes:
+  elasticsearch_vol: {}
+networks:
+  elk:
+    driver: bridge

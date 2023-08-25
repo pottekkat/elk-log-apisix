@@ -1,0 +1,33 @@
+global_rules:
+  - id: log_all 
+    plugins:
+        elasticsearch-logger:
+          endpoint_addr: "http://elasticsearch:9200"
+          field:
+            index: gateway
+            type: log
+          ssl_verify: false
+          timeout: 60
+          buffer_duration: 5
+          max_retry_count: 5
+          inactive_timeout: 5
+          # log_format:
+          #   host: "$host"
+          #   timestamp: "$time_iso8601"
+          #   client_ip: "$remote_addr"
+        # http-logger:
+        #   uri: "http://logstash:8080"
+        #   timeout: 60
+
+routes:
+  - uri: /products/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "upstream200:80": 1
+  - uri: /services/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "upstream500:80": 1
+#END
